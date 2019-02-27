@@ -827,7 +827,9 @@ func (s *Silences) SetBroadcast(f func([]byte)) {
 type state map[string]*pb.MeshSilence
 
 func (s state) merge(e *pb.MeshSilence, now time.Time) bool {
+	id := e.Silence.Id
 	if e.ExpiresAt.Before(now) {
+		delete(s, id) // Just in case it is still lingering.
 		return false
 	}
 	// Comments list was moved to a single comment. Apply upgrade
@@ -837,7 +839,6 @@ func (s state) merge(e *pb.MeshSilence, now time.Time) bool {
 		e.Silence.CreatedBy = e.Silence.Comments[0].Author
 		e.Silence.Comments = nil
 	}
-	id := e.Silence.Id
 
 	prev, ok := s[id]
 	if !ok || prev.Silence.UpdatedAt.Before(e.Silence.UpdatedAt) {
